@@ -1,6 +1,38 @@
 package adduct;
 
+import lipid.IonizationMode;
+
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class Adduct {
+
+    public static int extractMultimer(String adduct) {
+
+        Pattern pattern = Pattern.compile("\\[(\\d*)M");
+        Matcher matcher = pattern.matcher(adduct);
+        if (matcher.find() && !matcher.group(1).isEmpty()) {
+            return Integer.parseInt(matcher.group(1));
+        }
+        return 1;
+
+    }
+
+    public static int extractCharge(String adduct) {
+            Pattern pattern = Pattern.compile("(\\d*)([\\+\\-−])\\]");
+            Matcher matcher = pattern.matcher(adduct);
+
+       if (matcher.find()) {
+            String number = matcher.group(1);
+            String sign = matcher.group(2);
+            int charge = number.isEmpty() ? 1 : Integer.parseInt(number);
+            if (sign.equals("-") || sign.equals("−")) charge *= -1;
+            return charge;
+        }
+        return 1;
+
+    }
 
     /**
      * Calculate the mass to search depending on the adduct hypothesis
@@ -10,22 +42,17 @@ public class Adduct {
      *
      * @return the monoisotopic mass of the experimental mass mz with the adduct @param adduct
      */
-    public static Double getMonoisotopicMassFromMZ(Double mz, String adduct) {
+    public static Double getMonoisotopicMassFromMZ(Double mz, String adduct, IonizationMode ioniation) {
         Double massToSearch;
-        // !! TODO METHOD
-        // !! TODO Create the necessary regex to obtain the multimer (number before the M) and the charge (number before the + or - (if no number, the charge is 1).
+        if(mz!= null||adduct!=null) {
+            int multimer = extractMultimer(adduct);
+            int charge = extractCharge(adduct);
+            Map<String, Double> adductMap = ioniation == IonizationMode.POSITIVE ? AdductList.MAPMZPOSITIVEADDUCTS : AdductList.MAPMZNEGATIVEADDUCTS;
+            massToSearch = adductMap.get(adduct);
+            return (mz * charge + massToSearch) / multimer;
+        }
 
-        /*
-        if Adduct is single charge the formula is M = m/z +- adductMass. Charge is 1 so it does not affect
-
-        if Adduct is double or triple charged the formula is M = ( mz +- adductMass ) * charge
-
-        if adduct is a dimer or multimer the formula is M =  (mz +- adductMass) / numberOfMultimer
-
-        return monoisotopicMass;
-
-         */
-        return null;
+            return null;
     }
 
     /**
@@ -36,22 +63,18 @@ public class Adduct {
      *
      * @return
      */
-    public static Double getMZFromMonoisotopicMass(Double monoisotopicMass, String adduct) {
+    public static Double getMZFromMonoisotopicMass(Double monoisotopicMass, String adduct, IonizationMode ioniation) {
         Double massToSearch;
-        // !! TODO METHOD
-        // !! TODO Create the necessary regex to obtain the multimer (number before the M) and the charge (number before the + or - (if no number, the charge is 1).
+        if(monoisotopicMass!= null||adduct!=null) {
+            int multimer = extractMultimer(adduct);
+            int charge = extractCharge(adduct);
+            Map<String, Double> adductMap = ioniation == IonizationMode.POSITIVE ? AdductList.MAPMZPOSITIVEADDUCTS : AdductList.MAPMZNEGATIVEADDUCTS;
+            massToSearch = adductMap.get(adduct);
+            return (monoisotopicMass * multimer - massToSearch) / charge;
+        }
 
-        /*
-        if Adduct is single charge the formula is m/z = M +- adductMass. Charge is 1 so it does not affect
-
-        if Adduct is double or triple charged the formula is mz = M/charge +- adductMass
-
-        if adduct is a dimer or multimer the formula is mz = M * numberOfMultimer +- adductMass
-
-        return monoisotopicMass;
-
-         */
         return null;
+
     }
 
     /**
@@ -70,7 +93,7 @@ public class Adduct {
     /**
      * Returns the ppm difference between measured mass and theoretical mass
      *
-     * @param measuredMass    Mass measured by MS
+     * @param experimentalMass    Mass measured by MS
      * @param ppm ppm of tolerance
      */
     public static double calculateDeltaPPM(Double experimentalMass, int ppm) {

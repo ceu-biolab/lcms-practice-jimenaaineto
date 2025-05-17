@@ -1,6 +1,10 @@
 package lipid;
 
-public class Peak {
+public class Peak implements Comparable<Peak> {
+    @Override
+    public int compareTo(Peak o) {
+        return 0;
+    }
 
     private final double mz;
     private final double intensity;
