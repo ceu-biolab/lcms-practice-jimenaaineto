@@ -1,3 +1,4 @@
+
 package lipid;
 
 import java.util.Objects;
@@ -28,7 +29,7 @@ public class Lipid {
         this.doubleBondsCount = doubleBondCount;
     }
 
-    public int getCompoundId() {
+    public int getId() {
         return compoundId;
     }
 
